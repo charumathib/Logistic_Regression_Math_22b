@@ -8,83 +8,104 @@ import matplotlib.colors as c
 import matplotlib.patches as mpatches
 from logistic_regression import LogisticRegression
 from matplotlib.lines import Line2D
-
-# These are the hyperparameters to the classifiers. You may need to
-# adjust these as you try to find the best fit for each classifier.
+from mlxtend.plotting import plot_decision_regions
+from sklearn.preprocessing import StandardScaler
 
 # Logistic Regression hyperparameters
-eta = 0.05 # Learning rate
-lam = 0.0 # Lambda for regularization
+eta = 0.001 # Learning rate
+lam = 0.0001 # Lambda for regularization
 
 # Whether or not you want the plots to be displayed
 show_charts = True
 
-
-# DO NOT CHANGE ANYTHING BELOW THIS LINE!
 # -----------------------------------------------------------------
 
 # Visualize the decision boundary that a model produces
-def visualize_boundary(model, X, y, title, width=2):
+def visualize_boundary(model, X, y, title, xlabel, ylabel, imgname, show, width=2):
     # Create a grid of points
-    weights = model.fit(x_s, y_s)
-    colors = ["red", "blue"]
-    colormap = c.ListedColormap(colors)
-    countries = data["Country "].to_numpy()
-    
-    def map_helper (x):
-        if x == 0:
-            return "Developed"
-        return "Developing"
+    if show:
+        weights = model.fit(x_s, y_s)
+        ax = plot_decision_regions(X, y, clf=model)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.title(title)
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles, 
+                ['Developed', 'Developing'], 
+                framealpha=0.3, scatterpoints=1)
+        plt.show()
+        plt.savefig(imgname)
+        print("Accuracy: ", model.score(x_s, y_s))
 
-    fig, ax = plt.subplots()
-    scatter = ax.scatter(X[:, 0], X[:, 1], c=y, cmap=colormap)
-    
-    custom = [Line2D([0], [0], marker='o', color='w', label='Developed', markerfacecolor='r', markersize=10),
-              Line2D([0], [0], marker='o', color='w', label='Developing', markerfacecolor='b', markersize=10) ]
-
-    legend = ax.legend(handles=custom, loc="lower right")
-    ax.add_artist(legend)
-
-    for i in range(len(X)):
-        name = countries[i][:8]
-        plt.annotate(xy=[X[i][0],X[i][1]], s=name)
-
-    x_min, x_max = min(list(X[:, 0])), max(list((X[:, 0])))
-    y_min, y_max = min(list(X[:, 1])), max(list((X[:, 1])))
-
-    print(x_min)
-    print(y_min)
-    b = -weights[0]/weights[2]
-    m = -weights[1]/weights[2]
-
-    xd = np.array([x_min, x_max])
-    yd = m * xd + b
-
-    plt.plot(xd, yd, 'k', lw=1, ls='--', label='Log Reg Decision Boundary')
-    plt.fill_between(xd, yd, y_min, color='tab:blue', alpha=0.2)
-    plt.fill_between(xd, yd, y_max, color='tab:red', alpha=0.2)
-    plt.xlabel("Real GDP Growth")
-    plt.ylabel("Human Development Index")
-    plt.legend()
-    plt.title("Using Logistic Regression to Predict Whether a Nation is Developed or Developing\n Based on GDP Growth and Human Development Index")
-
-    # Saving the image to a file, and showing it as well
-    
-    plt.savefig('developed_vs_developing.png')
-    plt.show()
-
-
-# A mapping from string name to id
-class_labels = {
-    'Developed': 0,       # also corresponds to 'red' in the graphs
-    'Developing': 1,       # also corresponds to 'blue' in the graphs
-}
 
 data = pd.read_excel(r"./math_proj.xlsx")
-print(data)
 x1 = data["Real GDP growth"].to_numpy()
 x2 = data["Human Development Index"].to_numpy()
 x_s = np.concatenate((x1.reshape(x1.shape[0],1), x2.reshape(x2.shape[0],1)), axis=1)
 y_s = data["Class"].to_numpy()
-lr = LogisticRegression(eta=eta, lam=lam, runs=1000)
-visualize_boundary(lr, x_s, y_s, 'logistic_regression_result')
+lr = LogisticRegression(eta=eta, lam=lam, runs=5000)
+visualize_boundary(lr, x_s, y_s, 
+                    "Using Logistic Regression to Predict Whether a Nation is Developed or Developing\n Based on GDP Growth and Human Development Index", 
+                    "Real GDP Growth",
+                    "Human Development Index",
+                    'gdp_vs_hdi', False)
+
+data = pd.read_excel(r"./math_proj_2.xlsx")
+x1 = data["Inflation (% change) "].to_numpy()
+x2 = data["General Government Total Expenditure (%GDP)"].to_numpy()
+scaler = StandardScaler()
+x_s = np.concatenate((x1.reshape(x1.shape[0],1), x2.reshape(x2.shape[0],1)), axis=1)
+scaler.fit(x_s)
+x_s = scaler.transform(x_s)
+y_s = data["Class"].to_numpy()
+lr = LogisticRegression(eta=eta, lam=lam, runs=5000)
+visualize_boundary(lr, x_s, y_s, 
+                    "Using Logistic Regression to Predict Whether a Nation is Developed or Developing\n Based on Inflation and Government Expenditure", 
+                    "Inflation (% change)",
+                    "General Government Total Expenditure (%GDP)",
+                    'inflation_vs_expenditure', False)
+
+data = pd.read_excel(r"./math_proj_2.xlsx")
+x1 = data["Inflation (% change) "].to_numpy()
+x2 = data["General government net lending/borrowing (% GDP)"].to_numpy()
+scaler = StandardScaler()
+x_s = np.concatenate((x1.reshape(x1.shape[0],1), x2.reshape(x2.shape[0],1)), axis=1)
+scaler.fit(x_s)
+y_s = data["Class"].to_numpy()
+lr = LogisticRegression(eta=eta, lam=lam, runs=5000)
+visualize_boundary(lr, x_s, y_s, 
+                    "Using Logistic Regression to Predict Whether a Nation is Developed or Developing\n Based on Inflation and Government Net Lending and Borrowing", 
+                    "Inflation (% change)",
+                    "General government Net Lending/Borrowing (% GDP)",
+                    'inflation_vs_borrowing', True)
+
+data = pd.read_excel(r"./math_proj_3.xlsx")
+x1 = data["Maternity"].to_numpy()
+x2 = data["Government Expenditure"].to_numpy()
+scaler = StandardScaler()
+x_s = np.concatenate((x1.reshape(x1.shape[0],1), x2.reshape(x2.shape[0],1)), axis=1)
+scaler.fit(x_s)
+x_s = scaler.transform(x_s)
+y_s = data["Class"].to_numpy()
+lr = LogisticRegression(eta=eta, lam=lam, runs=5000)
+visualize_boundary(lr, x_s, y_s, 
+                    "Using Logistic Regression to Predict Whether a Nation is Developed or Developing\n Based on Duration of Paid Maternity Leave and Government Expenditure", 
+                    "Duration of Paid Maternity Leave (Standardized)",
+                    "Government Expenditure (Standardized)",
+                    'maternity_vs_expenditure', False)
+
+# change these parameters
+data = pd.read_excel(r"./math_proj_4.xlsx")
+x1 = data["Tech"].to_numpy()
+x2 = data["Births"].to_numpy()
+scaler = StandardScaler()
+x_s = np.concatenate((x1.reshape(x1.shape[0],1), x2.reshape(x2.shape[0],1)), axis=1)
+scaler.fit(x_s)
+x_s = scaler.transform(x_s)
+y_s = data["Class"].to_numpy()
+lr = LogisticRegression(eta=eta, lam=lam, runs=5000)
+visualize_boundary(lr, x_s, y_s, 
+                    "Using Logistic Regression to Predict Whether a Nation is Developed or Developing\n Based on Share of Female STEM Graduates and Proportion of Births Attended by Healthcare Professionals", 
+                    "Share of Female STEM Graduates (Standardized)",
+                    "Proportion of Births Attended by Healthcare Professionals (Standardized)",
+                    'tech_vs_births', False)

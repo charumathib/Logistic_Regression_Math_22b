@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 
 class LogisticRegression:
     def __init__(self, eta, lam, runs):
@@ -9,10 +10,15 @@ class LogisticRegression:
         self.runs = runs
 
     def fit(self, X, y):
-        self.len, self.feat = X.shape
-        self.X = np.c_[np.ones(self.len), X]
+        # for government expenditure
+        # self.X = np.c_[np.ones(len(X)), X, X[:,0]**2]
+        # for government borrowing
+        self.X = np.c_[np.ones(len(X)), X, X[:,0]**2, X[:,1]**2]
+        #regular
+        # self.X = np.c_[np.ones(len(X)), X]
+        self.len, self.feat = self.X.shape
         self.y_target = y
-        self.W = np.random.rand(self.feat + 1)
+        self.W = np.random.rand(self.feat)
         self.loss = []
 
         self.num_runs = 0
@@ -42,7 +48,12 @@ class LogisticRegression:
 
     def predict(self, X_pred):
         preds = []
-        X_pred = np.c_[np.ones(len(X_pred)), X_pred]
+        # for government expenditure
+        # X_pred = np.c_[np.ones(len(X_pred)), X_pred, X_pred[:,0]**2]
+        # for government borrowing
+        X_pred = np.c_[np.ones(len(X_pred)), X_pred, X_pred[:,0]**2, X_pred[:,1]**2]
+        # regular
+        # X_pred = np.c_[np.ones(len(X_pred)), X_pred]
         for i in range(len(X_pred)):
             z = np.dot(self.W, X_pred[i])
             sigmoid = self.__sigmoid(z)
@@ -50,6 +61,22 @@ class LogisticRegression:
             else: preds.append(0)
         return np.array(preds)
     
+    def score(self, X, y_true):
+        return np.count_nonzero((self.predict(X) - y_true) == 0)/len(y_true)
+    
     def plot_loss(self):
         plt.plot(np.linspace(0, self.num_runs, self.num_runs), self.loss)
         plt.show()
+
+# data = pd.read_excel(r"./math_proj_3.xlsx")
+# x1 = data["Maternity"].to_numpy()
+# x2 = data["Government Expenditure"].to_numpy()
+# scaler = StandardScaler()
+# x_s = np.concatenate((x1.reshape(x1.shape[0],1), x2.reshape(x2.shape[0],1)), axis=1)
+# scaler.fit(x_s)
+# x_s = scaler.transform(x_s)
+# y_s = data["Class"].to_numpy()
+# lr = LogisticRegression(eta=0.001, lam=0.00, runs=1000)
+# lr.fit(x_s, y_s)
+# print(lr.score(x_s, y_s))
+# lr.plot_loss()
